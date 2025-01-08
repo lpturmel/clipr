@@ -1,3 +1,4 @@
+use crate::cli::Cli;
 use clap::Parser;
 use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
@@ -9,13 +10,13 @@ use std::{
     fs::File,
     io::BufWriter,
     path::Path,
-    sync::{Arc, Mutex},
+    sync::{mpsc, Arc, Mutex},
     time::Duration,
 };
 
-use self::cli::Cli;
-
 mod cli;
+
+type SaveRequest = Vec<f32>;
 
 fn main() -> Result<(), anyhow::Error> {
     let app_dir =
@@ -41,10 +42,7 @@ fn main() -> Result<(), anyhow::Error> {
         })
         .ok_or(anyhow::Error::msg("'BlackHole 2ch' not available"))?;
 
-    println!(
-        "Using device: {}",
-        device.name().expect("Invalid device name")
-    );
+    println!("Using device: {}", device.name()?);
 
     let config = device.default_input_config()?;
 
@@ -54,6 +52,20 @@ fn main() -> Result<(), anyhow::Error> {
 
     let total_samples = sample_rate * channels * cli.duration;
     let rb = Arc::new(Mutex::new(HeapRb::<f32>::new(total_samples)));
+
+    let (tx, rx) = mpsc::channel::<SaveRequest>();
+
+    let config_c = config.clone();
+    let app_dir_c = app_dir.clone();
+    let cli_c = cli.clone();
+
+    std::thread::spawn(move || {
+        for samples in rx {
+            if let Err(e) = save_recording(&cli_c, &samples, &app_dir_c, &config_c) {
+                eprintln!("Failed to save recording: {}", e);
+            }
+        }
+    });
 
     let stream_rb = rb.clone();
     let stream = match sample_format {
@@ -70,6 +82,7 @@ fn main() -> Result<(), anyhow::Error> {
     };
 
     stream.play()?;
+
     let device_state = DeviceState::new();
 
     loop {
@@ -80,8 +93,11 @@ fn main() -> Result<(), anyhow::Error> {
             && keys.contains(&Keycode::LControl)
             && (keys.contains(&Keycode::LAlt) || keys.contains(&Keycode::LOption))
         {
-            let mut rb = rb.lock().unwrap();
-            let samples = rb.pop_iter().collect::<Vec<_>>();
+            let samples = {
+                // Make sure we drop the lock before sending the samples
+                let mut rb = rb.lock().unwrap();
+                rb.pop_iter().collect::<Vec<_>>()
+            };
 
             let is_empty = samples.iter().all(|sample| sample.abs() < 1e-6);
 
@@ -90,14 +106,16 @@ fn main() -> Result<(), anyhow::Error> {
                 continue;
             }
 
-            let _ = save_recording(&cli, samples, &app_dir, &config);
+            if let Err(e) = tx.send(samples) {
+                eprintln!("Failed to send recording: {}", e);
+            }
         }
     }
 }
 
 fn save_recording(
     cli: &Cli,
-    samples: Vec<f32>,
+    samples: &[f32],
     path: &Path,
     config: &SupportedStreamConfig,
 ) -> Result<(), anyhow::Error> {
@@ -111,8 +129,15 @@ fn save_recording(
     let file = BufWriter::new(File::create(&path)?);
     let mut wav_writer = hound::WavWriter::new(file, spec)?;
 
-    for sample in samples {
-        wav_writer.write_sample(sample)?;
+    if let (Some(start), Some(end)) = (
+        samples.iter().position(|&s| s.abs() >= 1e-6),
+        samples.iter().rposition(|&s| s.abs() >= 1e-6),
+    ) {
+        for &sample in &samples[start..=end] {
+            wav_writer.write_sample(sample)?;
+        }
+    } else {
+        println!("Recording is empty, not saving.");
     }
 
     wav_writer.finalize()?;
