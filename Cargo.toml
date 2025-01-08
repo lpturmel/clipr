@@ -1,0 +1,14 @@
+[package]
+name = "clipr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.95"
+chrono = "0.4.39"
+clap = { version = "4.5.24", features = ["derive"] }
+cpal = "0.15.3"
+device_query = "2.1.0"
+directories = "5.0.1"
+hound = "3.5.1"
+ringbuf = "0.4.7"
