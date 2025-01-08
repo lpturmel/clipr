@@ -5,4 +5,7 @@ use clap::Parser;
 pub struct Cli {
     #[clap(short, long, default_value = "30")]
     pub duration: usize,
+
+    #[clap(short, long, default_value = "%Y%m%d_%H%M%S")]
+    pub date_format: String,
 }
