@@ -6,21 +6,19 @@ specified buffer length (`duration` flag).
 ## Usage
 
 ```
-clipr
-```
+Usage: clipr [OPTIONS]
 
-## Flags
-
+Options:
+  -d, --duration <DURATION>        [default: 30]
+  -d, --date-format <DATE_FORMAT>  [default: %Y%m%d_%H%M%S]
+  -h, --help                       Print help
+  -V, --version                    Print version
 ```
-  -d, --duration duration   Internal buffer in seconds (default: 30)
-  -h, --help                help for clipr
-```
-
 
 ## Keybindings
 
 ```
-Ctrl+S: Save recording to clipr/recorded_<timestamp>.wav
+Ctrl+Alt/Option+S: Save recording to clipr/recorded_<timestamp>.wav
 ```
 
 ## Default clip directory
