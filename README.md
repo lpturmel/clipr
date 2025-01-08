@@ -9,10 +9,10 @@ specified buffer length (`duration` flag).
 Usage: clipr [OPTIONS]
 
 Options:
-  -d, --duration <DURATION>        [default: 30]
-  -d, --date-format <DATE_FORMAT>  [default: %Y%m%d_%H%M%S]
-  -h, --help                       Print help
-  -V, --version                    Print version
+  -d, --duration <DURATION>  [default: 30]
+  -f, --format <FORMAT>      [default: %Y%m%d_%H%M%S]
+  -h, --help                 Print help
+  -V, --version              Print version
 ```
 
 ## Keybindings

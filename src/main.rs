@@ -98,7 +98,7 @@ fn save_recording(
 
     let filename = format!(
         "recorded_{}.wav",
-        chrono::Local::now().format(cli.date_format.as_str())
+        chrono::Local::now().format(cli.format.as_str())
     );
     let path = path.join(filename);
     let file = BufWriter::new(File::create(&path)?);
