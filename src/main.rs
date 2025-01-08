@@ -73,6 +73,7 @@ fn main() -> Result<(), anyhow::Error> {
     let device_state = DeviceState::new();
 
     loop {
+        std::thread::sleep(Duration::from_millis(100));
         let keys = device_state.get_keys();
 
         if keys.contains(&Keycode::S)
@@ -82,9 +83,15 @@ fn main() -> Result<(), anyhow::Error> {
             let mut rb = rb.lock().unwrap();
             let samples = rb.pop_iter().collect::<Vec<_>>();
 
+            let is_empty = samples.iter().all(|sample| sample.abs() < 1e-6);
+
+            if is_empty {
+                println!("Recording is empty, not saving.");
+                continue;
+            }
+
             let _ = save_recording(&cli, samples, &app_dir, &config);
         }
-        std::thread::sleep(Duration::from_millis(100));
     }
 }
 
