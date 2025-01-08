@@ -23,8 +23,8 @@ clipr
 Ctrl+S: Save recording to clipr/recorded_<timestamp>.wav
 ```
 
-## Default directory
+## Default clip directory
 
-Linux: `/home/alice/Music/clipr`
-Mac: `/Users/Alice/Music/clipr`
-Windows: `C:\Users\Alice\Music\clipr`
+- Linux: `/home/alice/Music/clipr`
+- Mac: `/Users/Alice/Music/clipr`
+- Windows: `C:\Users\Alice\Music\clipr`
